@@ -5,7 +5,7 @@ const path = require("path");
 const axios = require('axios');
 
 
-const caCertPath = path.resolve("/Users/murat/.postgresql/root.crt");
+const caCertPath = path.resolve("./root.crt");
 
 const caCert = fs.readFileSync(caCertPath).toString();
 
@@ -24,27 +24,26 @@ async function getTotalPages() {
     try {
         const response  = await axios.get('https://rickandmortyapi.com/api/character');
         const totalPages = response.data.info.pages;
-        console.log('totalPages = ', totalPages);
+        console.log('Всего страниц с героями = ', totalPages);
         return totalPages
     } catch (error) {
         console.error('Error fetching data:', error);
         throw error;
     }
 }
-const delete_table = `DROP TABLE murat_nurmatov`;
+// const delete_table = `DROP TABLE murat_nurmatov`;
 
 const createTable = `CREATE TABLE murat_nurmatov (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     data JSONB
 );`
-conn.query(delete_table, (err, q) => {
-    if (err) throw err;
-    console.log(q.rows[0]);
-});
+// conn.query(delete_table, (err, q) => {
+//     if (err) throw err;
+//     console.log(q.rows[0]);
+// });
 conn.query(createTable, (err, q) => {
     if (err) throw err;
-    console.log(q.rows[0]);
 });
 
 conn.connect((err) => {
@@ -61,7 +60,6 @@ conn.connect((err) => {
 
                 await conn.query(insertQuery, [id, name, jsonData]);
             }
-            console.log("Данные успешно добавлены в таблицу.");
         } catch (error) {
             console.error("Ошибка при добавлении данных:", error);
         } finally {
@@ -71,12 +69,14 @@ conn.connect((err) => {
     async function loadDataFromAPI() {
         try {
             const pages = await getTotalPages();
+            console.log('Данные о героях добавляются в базу...')
             for (let i = 1; i <= pages; i++){
+                console.log(`Добавляются данные со страницы - ${i}...`);
                 const response = await axios.get(`https://rickandmortyapi.com/api/character/?page=${i}`);
                 const data = response.data;
-                console.log('id = ', data.results.id);
                 await addDataToTable(data);
             }
+            console.log("Данные успешно добавлены в таблицу.");
             conn.end();
         } catch (error) {
             console.error("Ошибка при загрузке данных с API:", error);
